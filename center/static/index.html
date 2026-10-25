@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>授权中心 · License Center</title>
+    <link rel="stylesheet" href="/admin.css" />
+    <script src="/admin.js" defer></script>
+  </head>
+  <body>
+    <aside>
+      <div class="brand">LC<span>授权中心</span></div>
+      <p>独立授权 · 统一管理</p>
+      <nav id="nav">
+        <button data-tab="overview" class="selected">总览与许可证</button
+        ><button data-tab="products">产品与套餐</button
+        ><button data-tab="codes">兑换码交付</button
+        ><button data-tab="instances">实例与租约</button
+        ><button data-tab="audit">审计与恢复记录</button>
+      </nav>
+      <footer>协议 v1 / 单节点事务存储<br />UTC 存储 · 本地时区展示</footer>
+    </aside>
+    <main>
+      <header>
+        <div>
+          <small>LICENSE OPERATIONS</small>
+          <h1 id="title">授权管理</h1>
+        </div>
+        <div class="tools">
+          <select id="scope" aria-label="产品范围">
+            <option value="">全部可见产品</option></select
+          ><button id="reload">刷新</button><button id="logout">退出</button>
+        </div>
+      </header>
+      <div id="notice" role="status">
+        登录后查看实际业务数据。后台会话仅保存在当前页面内存中。
+      </div>
+      <section id="login-panel">
+        <h2>管理员登录</h2>
+        <p>首次部署请使用 CLI 创建管理员，并绑定验证器。没有通用默认密码。</p>
+        <form id="login">
+          <label
+            >账号<input
+              name="username"
+              autocomplete="username"
+              required /></label
+          ><label
+            >密码<input
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required /></label
+          ><label
+            >动态验证码<input
+              name="otp"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              autocomplete="one-time-code"
+              required /></label
+          ><button class="primary">安全登录</button>
+        </form>
+      </section>
+      <div id="workspace" hidden>
+        <section id="overview" class="tab">
+          <div id="stats" class="stats"></div>
+          <div class="section-head">
+            <div>
+              <h2>客户与许可证</h2>
+              <p>暂停继续计时；撤销立即拒绝刷新，缓存凭证到期前可能仍可用。</p>
+            </div>
+            <input
+              id="search"
+              placeholder="搜索当前页客户或许可证"
+              aria-label="搜索许可证"
+            />
+          </div>
+          <div id="licenses-table" class="table-wrap"></div>
+          <details>
+            <summary>诊断与授权规则</summary>
+            <p>
+              列表最多显示 500
+              条，请按产品缩小范围。许可证期限与短期凭证期限不同。永久套餐默认仍需每
+              300 秒刷新、凭证 900 秒到期。业务配额应在业务数据库事务内计数，SDK
+              只判断额度上限。
+            </p>
+            <pre id="key-status"></pre>
+          </details>
+        </section>
+        <section id="products" class="tab" hidden>
+          <h2>产品与版本</h2>
+          <form id="product-form" class="inline">
+            <label
+              >产品标识<input
+                name="id"
+                pattern="[a-z0-9][a-z0-9_-]{0,63}"
+                required /></label
+            ><label>名称<input name="name" required /></label
+            ><label>版本<input name="version" value="1.0" required /></label
+            ><button class="primary">保存产品</button>
+          </form>
+          <div id="products-table" class="table-wrap"></div>
+          <h2>套餐与功能配额</h2>
+          <p>保存只影响后续生成的兑换码；兑换码和许可证均保存权益快照。</p>
+          <div id="plans-table" class="table-wrap"></div>
+          <form id="plan-form">
+            <label
+              >套餐 JSON（完整配置）<textarea
+                id="plan-json"
+                rows="17"
+                spellcheck="false"
+              ></textarea></label
+            ><button class="primary">保存套餐</button>
+          </form>
+        </section>
+        <section id="codes" class="tab" hidden>
+          <h2>生成与交付兑换码</h2>
+          <p>
+            192 位随机熵。数据库仅存 HMAC
+            摘要和短前缀；完整码只在本次生成响应中返回。再次验证须使用新的动态验证码。
+          </p>
+          <form id="code-form" class="inline">
+            <label
+              >套餐<select name="plan" id="code-plan" required></select></label
+            ><label
+              >用途<select name="kind">
+                <option value="new">新授权</option>
+                <option value="renew">续费</option>
+                <option value="upgrade">功能升级</option>
+              </select></label
+            ><label
+              >数量<input
+                name="count"
+                type="number"
+                min="1"
+                max="500"
+                value="1" /></label
+            ><label
+              >单码兑换次数<input
+                name="max_uses"
+                type="number"
+                min="1"
+                value="1" /></label
+            ><label
+              >兑换截止（可空）<input
+                name="redeem_before"
+                type="datetime-local" /></label
+            ><label
+              >指定起算时间（可空）<input
+                name="starts_at"
+                type="datetime-local" /></label
+            ><label>备注<input name="note" maxlength="300" /></label
+            ><button class="primary">再次验证并生成</button>
+          </form>
+          <div id="delivery" hidden>
+            <h3>一次性交付结果</h3>
+            <p>请立即下载并安全交付；刷新页面后无法找回。</p>
+            <button id="download">下载 CSV</button
+            ><button id="clear-delivery">清除交付结果</button>
+            <pre id="delivery-text"></pre>
+          </div>
+          <div id="codes-table" class="table-wrap"></div>
+        </section>
+        <section id="instances" class="tab" hidden>
+          <h2>实例绑定与在线租约</h2>
+          <p>
+            进程崩溃后租约到期释放在线名额，设备绑定保留。管理员释放旧实例也不会缩短其已签发凭证的有效期。
+          </p>
+          <div id="instances-table" class="table-wrap"></div>
+        </section>
+        <section id="audit" class="tab" hidden>
+          <h2>操作审计</h2>
+          <p>
+            备份及恢复通过服务器 CLI
+            执行，此处展示其执行记录。审计库需要独立异地留存，不能抵抗数据库管理员篡改。
+          </p>
+          <div id="audit-table" class="table-wrap"></div>
+        </section>
+      </div>
+      <dialog id="stepup">
+        <form method="dialog">
+          <h2>高风险操作再次验证</h2>
+          <p>
+            输入未使用的新动态验证码。本次授权两分钟内有效，仅可执行一次敏感操作。
+          </p>
+          <label
+            >动态验证码<input
+              id="stepup-otp"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              required
+          /></label>
+          <div class="tools">
+            <button value="cancel" formnovalidate>取消</button
+            ><button value="confirm" class="primary">验证并继续</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+  </body>
+</html>
