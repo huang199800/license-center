@@ -39,3 +39,23 @@ jobs:
       - run: python -m pip install --require-hashes -r requirements.lock
       - name: Real Docker install, persistence, update and recovery drill
         run: sudo env PATH="$PATH" PYTHONPATH="$PWD" "$(which python)" -m scripts.container_acceptance
+  bootstrap-without-docker:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --require-hashes -r requirements.lock
+      - name: Remove preinstalled Docker only on this disposable hosted CI VM
+        run: |
+          test "$GITHUB_ACTIONS" = true
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          sudo systemctl stop docker.service docker.socket containerd.service || true
+          sudo apt-get purge -y docker-ce docker-ce-cli docker-ce-rootless-extras containerd.io docker-buildx-plugin docker-compose-plugin
+          sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/sources.list.d/docker.sources
+          ! command -v docker
+      - name: Public bootstrap, official Docker APT install and cross-commit upgrade
+        run: sudo env PATH="$PATH" PYTHONPATH="$PWD" LC_TEST_INITIAL_COMMIT=c2055650afac02fa628afc08f1e128574a458349 LC_TEST_BOOTSTRAP_SHA256=c6f974a4c34c48141eb0b97a5d5a45fc36e2a1c1c5c839937f422cc287ad6e1e "$(which python)" -m scripts.container_acceptance

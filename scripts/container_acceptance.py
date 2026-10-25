@@ -4,6 +4,7 @@
 Run as root with application test dependencies installed. Never point at production.
 """
 import base64
+import hashlib
 import json
 import os
 import secrets
@@ -11,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.request
 from pathlib import Path
 
 import httpx
@@ -27,14 +29,23 @@ def main():
     with tempfile.TemporaryDirectory(prefix='lc-container-drill-') as temp:
         base=Path(temp);root=base/'original';target=base/'recovered'
         config=base/'install.json';secret_dir=base/'secrets'
-        write_json(config,{'domain':'','secret_dir':str(secret_dir),'port':18081})
+        write_json(config,{'domain':'','secret_dir':str(secret_dir),'port':18081,'auto_install_docker':True})
+        initial=os.environ.get('LC_TEST_INITIAL_COMMIT',commit_of())
+        expected_bootstrap=os.environ.get('LC_TEST_BOOTSTRAP_SHA256',hashlib.sha256((source/'scripts/bootstrap.sh').read_bytes()).hexdigest())
+        bootstrap_bytes=urllib.request.urlopen('https://raw.githubusercontent.com/huang199800/license-center/'+initial+'/scripts/bootstrap.sh',timeout=30).read()
+        if hashlib.sha256(bootstrap_bytes).hexdigest()!=expected_bootstrap:raise RuntimeError('BOOTSTRAP_HASH_MISMATCH')
+        bootstrap_file=base/'bootstrap.sh';bootstrap_file.write_bytes(bootstrap_bytes)
+        def bootstrap():
+            result=subprocess.run(['bash',str(bootstrap_file),'--ref',initial,'--commit',initial,'--root',str(root),
+                                   '--config',str(config),'--non-interactive'],capture_output=True,text=True)
+            if result.returncode:raise RuntimeError('VERIFIED_PUBLIC_BOOTSTRAP_FAILED')
         def ops(command,*args):
             r=subprocess.run([sys.executable,str(source/'scripts/ops.py'),command,*map(str,args)],capture_output=True,text=True)
             if r.returncode:raise RuntimeError('INTEGRATION_OPERATION_FAILED_'+command)
             return r.stdout
         dep=Deployment(root)
         try:
-            ops('install','--root',root,'--config',config,'--non-interactive');checks.append('clean_source_install')
+            bootstrap();checks.append('hash_verified_public_bootstrap_install')
             credentials=dep.config()
             enrollment=json.loads((root/'exchange/admin-enrollment.json').read_text())
             url='http://127.0.0.1:18081'
@@ -50,15 +61,16 @@ def main():
             assert client.activate(codes.json()['delivery_once'][0]['code'],'container-drill')['status']=='active'
             assert client.requireFeature('basic');checks.append('admin_mfa_redeem_activate_signature')
             old_key=(root/'state/keys/vault.json').read_bytes()
-            ops('install','--root',root,'--config',config,'--non-interactive')
+            bootstrap()
             assert old_key==(root/'state/keys/vault.json').read_bytes()
             assert client.refresh()['status']=='active';checks.append('repeat_install_preserves_identity_and_license')
             ops('restart','--root',root);assert client.refresh()['status']=='active'
             dep.dc('up','-d','--force-recreate');dep.wait();assert client.refresh()['status']=='active'
             checks.append('restart_and_container_recreation_persist')
-            # Same pinned commit tests the real update state machine without inventing another release.
             ops('update','--root',root,'--ref',commit_of(),'--commit',commit_of())
-            assert client.refresh()['status']=='active';checks.append('same_schema_pinned_redeploy_preserves_license')
+            assert dep.meta()['commit']==commit_of()
+            assert client.refresh()['status']=='active'
+            checks.append('different_commit_compatible_upgrade' if initial!=commit_of() else 'same_commit_pinned_redeploy')
             backup=base/'migration.lcb2'
             ops('stop','--root',root);ops('backup','--root',root,'--output',backup)
             restored_config=base/'restore.json'
@@ -75,7 +87,8 @@ def main():
         finally:
             for deployment in [Deployment(root),Deployment(target)]:
                 if deployment.compose_path.exists():deployment.dc('down',allow_failure=True)
-    print(json.dumps({'passed':len(checks),'checks':checks,'scope':'real Docker; source install and second isolated root on same CI host, not two physical servers'}))
+    print(json.dumps({'passed':len(checks),'checks':checks,'initial_commit':initial,'target_commit':commit_of(),
+                      'scope':'real Docker; verified public bootstrap and second isolated root on same CI host, not two physical servers'}))
 
 
 if __name__=='__main__':main()
