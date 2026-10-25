@@ -2,7 +2,7 @@
 
 ## 支持与验证范围
 
-已实际执行：Windows x86_64、Python3.13.2、Node24.13.0、本机HTTP Uvicorn进程、SQLite并发事务及目录恢复。Python3.13仍在官方支持周期内，但本机补丁旧，**生产必须使用当前安全补丁**。容器及systemd文件以Linux x86_64/Python3.13为目标，目前环境没有Docker，未执行镜像构建、Linux或ARM验证。不要把提供配置等同于这些平台已验收。
+初次交付实测：Windows x86_64、Python3.13.2、Node24.13.0、本机HTTP及SQLite事务恢复。本机Python补丁旧，生产必须使用当前安全补丁。v1.1.0新增真实 [Ubuntu24.04 x86_64 CI验收](https://github.com/huang199800/license-center/actions/runs/40209354049)，覆盖公开引导、官方APT安装Docker、镜像构建、MFA、升级及恢复。CI验证的是scripts生成的Compose部署；手工compose.yaml、systemd模板、ARM和真实跨机DNS/HTTPS尚未单独验收，详见deployment.md。
 
 生产入口必须HTTPS。逻辑issuer例如 `urn:company:licenses` 不含物理IP；对外使用 `licenses.example.com` 稳定域名。中心数据目录、客户端实例状态目录与应用发布目录分离。不要在客户源码中包含中心vault。
 

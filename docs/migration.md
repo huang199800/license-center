@@ -52,4 +52,4 @@ sudo bash scripts/restore.sh --root /opt/license-center-restored --config /root/
 
 ## 当前验证与待验
 
-已验证：双口令分别加密、错误口令和篡改拒绝、拒绝覆盖已有目标、恢复原key及实例密钥后可刷新、重复初始化不改变签名身份。已提供真实Docker CI演练，覆盖首次安装、MFA、激活、重建、相同schema指定提交重部署及第二个隔离目录恢复；工作流未成功运行前一律标为待验。没有可用服务器时，不伪称已完成干净新服务器跨机验证。
+已验证：双口令分别加密、错误口令和篡改拒绝、拒绝覆盖已有目标、恢复原key及实例密钥后可刷新、重复初始化不改变签名身份。真实 [Ubuntu24.04 Docker CI](https://github.com/huang199800/license-center/actions/runs/40209354049) 已通过公开引导、官方APT安装Docker、首次MFA激活、重建、跨提交兼容升级及第二个隔离目录恢复。该恢复在同一台隔离运行器上完成，不等于两台物理服务器或DNS/HTTPS切换验收。

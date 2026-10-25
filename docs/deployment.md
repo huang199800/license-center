@@ -4,7 +4,7 @@
 
 ## 当前验收状态
 
-版本：1.1.0，数据库schema1。**尚未完成干净Debian/Ubuntu服务器上的Docker安装验收**：本机Windows没有可运行Docker/WSL，用户暂无测试服务器。不能把脚本存在、单元测试或CI工作流文件存在当作已部署。仓库Actions中的真实Docker任务成功后，才能把对应Ubuntu版本标为已验证；Debian与ARM需各自另验。
+版本：1.1.0，数据库schema1。发布提交 `fd772fd2fa8cbf04216f29386760298b9b49ae56`。已通过 [Ubuntu24.04 x86_64真实CI](https://github.com/huang199800/license-center/actions/runs/40209354049)：公开引导与hash校验、移除预装Docker后从官方APT重新安装、首次MFA与激活、重复安装、重建、从146e6a6提交升级到发布提交及隔离目录恢复。运行器预装Git/Python；没有声称验证Debian/ARM、两台物理服务器或公网DNS/HTTPS切换。机器可复用脚本不等于所有目标平台均已验证。
 
 目标系统白名单：Debian12/13、Ubuntu22.04/24.04/26.04，x86_64/aarch64。白名单表示安装器允许尝试，**不是已经逐一实测**。建议先在Ubuntu24.04 x86_64测试机验收，生产保留快照。要求root/sudo、至少3GiB空闲、本机rootful Docker Engine28+及Compose插件、可访问GitHub/PyPI/Docker官方镜像和APT源。远程Docker上下文及rootless UID映射暂不支持，会明确拒绝。不会关闭防火墙或卸载已有容器运行时。
 
@@ -12,10 +12,10 @@
 
 公开引导脚本是 `scripts/bootstrap.sh`，它只做环境引导、固定提交下载和调用安装器，不包含业务数据或秘密。发布后应从固定提交URL下载，先审阅脚本，再按**独立可信渠道取得**的SHA-256校验；最后调用时固定完整40位提交。不要直接执行不断变化的main分支。
 
-以下是**需要替换的大写占位符模板，不是已经填妥的一键命令**；本次交付消息/发行说明会给实际发布提交与脚本hash。校验值与脚本若只来自同一个已被攻陷的渠道，不能建立独立信任。
+以下为已发布版本的实际命令。代码SHA与引导脚本hash固定；更换版本时需重新核对。校验值与脚本若只来自同一个已被攻陷的渠道，不能建立独立信任。
 
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/huang199800/license-center/REPLACE_FULL_COMMIT/scripts/bootstrap.sh -o /tmp/lc-bootstrap.sh && printf '%s  %s\n' REPLACE_BOOTSTRAP_SHA256 /tmp/lc-bootstrap.sh | sha256sum -c - && sudo bash /tmp/lc-bootstrap.sh --ref REPLACE_FULL_COMMIT --commit REPLACE_FULL_COMMIT
+sudo bash -c 'set -euo pipefail; umask 077; apt-get update -qq; apt-get install -y -qq curl ca-certificates; f=$(mktemp); curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/huang199800/license-center/fd772fd2fa8cbf04216f29386760298b9b49ae56/scripts/bootstrap.sh -o "$f"; echo "c6f974a4c34c48141eb0b97a5d5a45fc36e2a1c1c5c839937f422cc287ad6e1e  $f" | sha256sum -c -; bash "$f" --ref fd772fd2fa8cbf04216f29386760298b9b49ae56 --commit fd772fd2fa8cbf04216f29386760298b9b49ae56; rm -f -- "$f"'
 ```
 
 前置认证对公开源码不需要Token。首次交互询问域名、稳定issuer以及是否安装Docker。依赖缺失时准备Python3/Git，Docker安装需明确选择；通过[Docker官方Debian/Ubuntu签名APT仓库](https://docs.docker.com/engine/install/ubuntu/)安装Engine和Compose插件，校验官方密钥指纹，拒绝自动移除冲突运行时。

@@ -1,6 +1,6 @@
 # 通用软件授权中心
 
-**Linux一键安装与运维已新增（v1.1.0）**：[部署入口](docs/deployment.md)、[备份迁移](docs/migration.md)、[秘密管理](docs/security.md)。公开仓库：[huang199800/license-center](https://github.com/huang199800/license-center)。首次安装使用 `scripts/bootstrap.sh` 或检出固定提交后运行 `sudo bash scripts/install.sh`；不要从main浮动分支直接部署生产。当前没有可用Linux/Docker主机，干净服务器验收仍需完成，不能把本机单元测试当作服务器部署验收。
+**v1.1.0 已公开发布并通过 Ubuntu 24.04 x86_64 验收**：[发布与一键命令](https://github.com/huang199800/license-center/releases/tag/v1.1.0)、[CI记录](https://github.com/huang199800/license-center/actions/runs/40209354049)、[部署入口](docs/deployment.md)、[备份迁移](docs/migration.md)、[秘密管理](docs/security.md)。验证包括移除预装Docker后的官方APT安装、公开固定提交引导、首次MFA、重复安装、容器重建、跨提交升级和隔离目录恢复。Debian/ARM、真实跨服务器DNS/HTTPS切换仍待验收。不要从浮动main分支直接部署生产。
 
 本交付包含可运行的授权中心、中文最小管理后台、Python 与 Node.js SDK、新项目和已有项目示例、迁移文件、加密备份恢复工具及自动化测试。它是可复现的单节点基线，尚不是原始清单所有第三阶段能力均已验收的生产终版。
 

@@ -1,6 +1,6 @@
 # 交付与验收边界
 
-补充v1.1.0：真实运维入口、双口令分离加密备份、独立key目录、公开GitHub引导、固定提交下载和Docker验收工作流已补充。最新本机Python结果见 pytest-result.txt（已新增独立vault轮换测试）；Node仍15项。干净Linux/Docker与跨物理服务器场景仍未实测，以 [deployment.md](deployment.md)、[migration.md](migration.md) 中的明确范围为准；下文52项是上个交付批次的历史记录。
+补充v1.1.0：Python61项、Node15项通过；真实 [Ubuntu24.04 x86_64 CI](https://github.com/huang199800/license-center/actions/runs/40209354049) 的unit/docker/bootstrap-without-docker三个任务全部成功。已验证公开hash引导、官方APT安装Docker、首次MFA、重建、跨提交更新、双口令备份和隔离目录恢复。详见ci-result.json、deployment.md和migration.md；真实两台服务器DNS/HTTPS、Debian/ARM及私有认证仍未实测。下文52项及“当时未执行Docker”等描述属于初次交付历史，当前部署验证状态以本段和第十三章为准。
 
 本项目是单节点可运行基线。第一阶段方案与第二阶段闭环已实现并在本机验证；第三阶段交付了部分扩展，不宣称原始完整需求全部完成，更不能未经生产环境验收就作为安全SLA承诺。
 

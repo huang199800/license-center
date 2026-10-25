@@ -1,0 +1,18 @@
+{
+  "recorded_on_client_date": "2026-10-26",
+  "release": "v1.1.0",
+  "commit": "fd772fd2fa8cbf04216f29386760298b9b49ae56",
+  "run_id": 40209354049,
+  "run_url": "https://github.com/huang199800/license-center/actions/runs/40209354049",
+  "jobs": {
+    "unit": {"id": 121217073286, "conclusion": "success"},
+    "docker": {"id": 121217073093, "conclusion": "success"},
+    "bootstrap-without-docker": {"id": 121217073228, "conclusion": "success"}
+  },
+  "python_tests": 61,
+  "node_tests": 15,
+  "os": "Ubuntu 24.04 x86_64 hosted runner",
+  "upgrade_from_commit": "146e6a6dfd01d5a4e99def415f00734864c56672",
+  "verified": ["public bootstrap and SHA-256", "official Docker APT installation after package removal", "MFA activation", "repeat installation preserves identity", "restart and container recreation", "cross-commit compatible upgrade", "split-password backup and new-root restore", "original client refresh after recovery", "filtered management logs"],
+  "not_verified": ["Debian", "ARM", "two physical servers", "DNS and public HTTPS cutover", "private SSH/PAT authentication"]
+}
