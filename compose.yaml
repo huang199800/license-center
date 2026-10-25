@@ -1,0 +1,38 @@
+services:
+  center:
+    build: .
+    restart: unless-stopped
+    environment:
+      LC_DATA: /data
+      LC_HOST: 0.0.0.0
+      LC_PORT: 8000
+    volumes:
+      - license-data:/data
+      - ./operator-exchange:/exchange
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+  gateway:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      LC_DOMAIN: ${LC_DOMAIN:?Set LC_DOMAIN in .env}
+    ports: ['80:80', '443:443']
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - gateway-data:/data
+      - gateway-config:/config
+    depends_on:
+      center:
+        condition: service_healthy
+volumes:
+  license-data:
+  gateway-data:
+  gateway-config:
