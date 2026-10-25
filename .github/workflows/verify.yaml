@@ -58,4 +58,4 @@ jobs:
           sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/sources.list.d/docker.sources
           ! command -v docker
       - name: Public bootstrap, official Docker APT install and cross-commit upgrade
-        run: sudo env PATH="$PATH" PYTHONPATH="$PWD" LC_TEST_INITIAL_COMMIT=c2055650afac02fa628afc08f1e128574a458349 LC_TEST_BOOTSTRAP_SHA256=c6f974a4c34c48141eb0b97a5d5a45fc36e2a1c1c5c839937f422cc287ad6e1e "$(which python)" -m scripts.container_acceptance
+        run: sudo env PATH="$PATH" PYTHONPATH="$PWD" LC_TEST_INITIAL_COMMIT=146e6a6dfd01d5a4e99def415f00734864c56672 LC_TEST_BOOTSTRAP_SHA256=c6f974a4c34c48141eb0b97a5d5a45fc36e2a1c1c5c839937f422cc287ad6e1e "$(which python)" -m scripts.container_acceptance
