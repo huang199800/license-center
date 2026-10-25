@@ -7,6 +7,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -38,7 +39,16 @@ def main():
         def bootstrap():
             result=subprocess.run(['bash',str(bootstrap_file),'--ref',initial,'--commit',initial,'--root',str(root),
                                    '--config',str(config),'--non-interactive'],capture_output=True,text=True)
-            if result.returncode:raise RuntimeError('VERIFIED_PUBLIC_BOOTSTRAP_FAILED')
+            if result.returncode:
+                # Expose only our controlled structured error codes, never raw buffers.
+                codes=[]
+                for line in (result.stdout+'\n'+result.stderr).splitlines():
+                    try:item=json.loads(line)
+                    except ValueError:continue
+                    code=item.get('error') if isinstance(item,dict) else None
+                    if isinstance(code,str) and re.fullmatch('[A-Za-z0-9_]+',code):codes.append(code)
+                print(json.dumps({'bootstrap_failed':True,'codes':codes,'stdout_bytes':len(result.stdout),'stderr_bytes':len(result.stderr)}),flush=True)
+                raise RuntimeError('VERIFIED_PUBLIC_BOOTSTRAP_FAILED')
         def ops(command,*args):
             r=subprocess.run([sys.executable,str(source/'scripts/ops.py'),command,*map(str,args)],capture_output=True,text=True)
             if r.returncode:raise RuntimeError('INTEGRATION_OPERATION_FAILED_'+command)
