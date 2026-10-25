@@ -1,0 +1,226 @@
+[
+  {
+    "name": "annotated-doc",
+    "version": "0.0.5",
+    "license": "MIT",
+    "project_urls": {
+      "Changelog": "https://github.com/fastapi/annotated-doc/release-notes.md",
+      "Documentation": "https://github.com/fastapi/annotated-doc",
+      "Homepage": "https://github.com/fastapi/annotated-doc",
+      "Issues": "https://github.com/fastapi/annotated-doc/issues",
+      "Repository": "https://github.com/fastapi/annotated-doc"
+    }
+  },
+  {
+    "name": "annotated-types",
+    "version": "0.8.0",
+    "license": "MIT",
+    "project_urls": {
+      "Changelog": "https://github.com/annotated-types/annotated-types/releases",
+      "Homepage": "https://github.com/annotated-types/annotated-types",
+      "Source": "https://github.com/annotated-types/annotated-types"
+    }
+  },
+  {
+    "name": "anyio",
+    "version": "4.15.1",
+    "license": "MIT",
+    "project_urls": {
+      "Changelog": "https://anyio.readthedocs.io/en/stable/versionhistory.html",
+      "Documentation": "https://anyio.readthedocs.io/en/latest/",
+      "Issue tracker": "https://github.com/agronholm/anyio/issues",
+      "Source code": "https://github.com/agronholm/anyio"
+    }
+  },
+  {
+    "name": "certifi",
+    "version": "2026.10.23",
+    "license": "MPL-2.0",
+    "project_urls": {
+      "Homepage": "https://github.com/certifi/python-certifi",
+      "Source": "https://github.com/certifi/python-certifi"
+    }
+  },
+  {
+    "name": "cffi",
+    "version": "2.1.1",
+    "license": "MIT-0",
+    "project_urls": {
+      "Changelog": "https://cffi.readthedocs.io/en/latest/whatsnew.html",
+      "Contact": "https://groups.google.com/forum/#!forum/python-cffi",
+      "Documentation": "https://cffi.readthedocs.io/",
+      "Download": "https://github.com/python-cffi/cffi/releases",
+      "Issue Tracker": "https://github.com/python-cffi/cffi/issues",
+      "Source Code": "https://github.com/python-cffi/cffi"
+    }
+  },
+  {
+    "name": "click",
+    "version": "8.5.0",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Changes": "https://click.palletsprojects.com/page/changes/",
+      "Chat": "https://discord.gg/pallets",
+      "Documentation": "https://click.palletsprojects.com/",
+      "Donate": "https://palletsprojects.com/donate",
+      "Source": "https://github.com/pallets/click/"
+    }
+  },
+  {
+    "name": "colorama",
+    "version": "0.4.6",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Homepage": "https://github.com/tartley/colorama"
+    }
+  },
+  {
+    "name": "cryptography",
+    "version": "50.0.2",
+    "license": "Apache-2.0 OR BSD-3-Clause",
+    "project_urls": {
+      "changelog": "https://cryptography.io/en/latest/changelog/",
+      "documentation": "https://cryptography.io/",
+      "homepage": "https://github.com/pyca/cryptography",
+      "issues": "https://github.com/pyca/cryptography/issues",
+      "source": "https://github.com/pyca/cryptography/"
+    }
+  },
+  {
+    "name": "fastapi",
+    "version": "0.162.0",
+    "license": "MIT",
+    "project_urls": {
+      "Changelog": "https://fastapi.tiangolo.com/release-notes/",
+      "Documentation": "https://fastapi.tiangolo.com/",
+      "Homepage": "https://github.com/fastapi/fastapi",
+      "Issues": "https://github.com/fastapi/fastapi/issues",
+      "Repository": "https://github.com/fastapi/fastapi"
+    }
+  },
+  {
+    "name": "h11",
+    "version": "0.16.0",
+    "license": "MIT",
+    "project_urls": {
+      "Homepage": "https://github.com/python-hyper/h11"
+    }
+  },
+  {
+    "name": "httpcore",
+    "version": "1.0.9",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Documentation": "https://www.encode.io/httpcore",
+      "Homepage": "https://www.encode.io/httpcore/",
+      "Source": "https://github.com/encode/httpcore"
+    }
+  },
+  {
+    "name": "httpx",
+    "version": "0.28.1",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Changelog": "https://github.com/encode/httpx/blob/master/CHANGELOG.md",
+      "Documentation": "https://www.python-httpx.org",
+      "Homepage": "https://github.com/encode/httpx",
+      "Source": "https://github.com/encode/httpx"
+    }
+  },
+  {
+    "name": "idna",
+    "version": "3.20",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Changelog": "https://github.com/kjd/idna/blob/master/HISTORY.md",
+      "Issue tracker": "https://github.com/kjd/idna/issues",
+      "Source": "https://github.com/kjd/idna"
+    }
+  },
+  {
+    "name": "opentelemetry-api",
+    "version": "1.45.1",
+    "license": "Apache-2.0",
+    "project_urls": {
+      "Homepage": "https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-api",
+      "Repository": "https://github.com/open-telemetry/opentelemetry-python"
+    }
+  },
+  {
+    "name": "pycparser",
+    "version": "3.12",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Homepage": "https://github.com/eliben/pycparser"
+    }
+  },
+  {
+    "name": "pydantic",
+    "version": "2.14.1",
+    "license": "MIT",
+    "project_urls": {
+      "Changelog": "https://pydantic.dev/docs/validation/latest/get-started/changelog/",
+      "Documentation": "https://pydantic.dev/docs/validation/latest/get-started/",
+      "Funding": "https://github.com/sponsors/samuelcolvin",
+      "Homepage": "https://github.com/pydantic/pydantic",
+      "Source": "https://github.com/pydantic/pydantic"
+    }
+  },
+  {
+    "name": "pydantic-core",
+    "version": "2.50.1",
+    "license": "MIT",
+    "project_urls": {
+      "Funding": "https://github.com/sponsors/samuelcolvin",
+      "Homepage": "https://github.com/pydantic",
+      "Source": "https://github.com/pydantic/pydantic/tree/main/pydantic-core"
+    }
+  },
+  {
+    "name": "starlette",
+    "version": "1.10.0",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Changelog": "https://starlette.dev/release-notes/",
+      "Documentation": "https://starlette.dev/",
+      "Funding": "https://github.com/sponsors/Kludex",
+      "Homepage": "https://github.com/Kludex/starlette",
+      "Source": "https://github.com/Kludex/starlette"
+    }
+  },
+  {
+    "name": "typing-extensions",
+    "version": "4.16.0",
+    "license": "PSF-2.0",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/python/typing_extensions/issues",
+      "Changes": "https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+      "Documentation": "https://typing-extensions.readthedocs.io/",
+      "Home": "https://github.com/python/typing_extensions",
+      "Q & A": "https://github.com/python/typing/discussions",
+      "Repository": "https://github.com/python/typing_extensions"
+    }
+  },
+  {
+    "name": "typing-inspection",
+    "version": "0.4.4",
+    "license": "MIT",
+    "project_urls": {
+      "Changelog": "https://github.com/pydantic/typing-inspection/blob/main/HISTORY.md",
+      "Documentation": "https://pydantic.github.io/typing-inspection/dev/",
+      "Homepage": "https://github.com/pydantic/typing-inspection",
+      "Source": "https://github.com/pydantic/typing-inspection"
+    }
+  },
+  {
+    "name": "uvicorn",
+    "version": "0.54.0",
+    "license": "BSD-3-Clause",
+    "project_urls": {
+      "Changelog": "https://uvicorn.dev/release-notes",
+      "Funding": "https://github.com/sponsors/Kludex",
+      "Homepage": "https://uvicorn.dev/",
+      "Source": "https://github.com/Kludex/uvicorn"
+    }
+  }
+]

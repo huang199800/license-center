@@ -1,0 +1,23 @@
+✔ valid Ed25519 credential (2.3567ms)
+✔ reject product (1.0754ms)
+✔ reject instance (0.5559ms)
+✔ reject expiry (1.0734ms)
+✔ reject future (0.4235ms)
+✔ reject type (0.3769ms)
+✔ reject perpetual (0.3701ms)
+✔ reject quota (0.3695ms)
+✔ unknown key (0.2562ms)
+✔ no algorithm confusion (0.2857ms)
+✔ no key URL trust (0.2228ms)
+✔ signature tamper (0.4459ms)
+✔ expired token (0.4017ms)
+✔ SDK cache, offline file, feature and quota (7.6044ms)
+✔ signed identities override untrusted response metadata (6.7887ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 107.0902
