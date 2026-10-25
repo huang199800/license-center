@@ -1,0 +1,11 @@
+{
+  "repo": "huang199800/license-center",
+  "domain": "",
+  "issuer": "urn:your-company:licenses",
+  "admin_username": "admin",
+  "port": 18080,
+  "http_port": 80,
+  "https_port": 443,
+  "auto_install_docker": true,
+  "ssh": false
+}

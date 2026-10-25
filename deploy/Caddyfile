@@ -1,0 +1,7 @@
+{$LC_DOMAIN} {
+    request_body {
+        max_size 64KB
+    }
+    reverse_proxy center:8000
+    header Strict-Transport-Security "max-age=31536000"
+}

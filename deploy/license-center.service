@@ -1,0 +1,23 @@
+[Unit]
+Description=License Center
+After=network.target
+
+[Service]
+Type=simple
+User=license
+Group=license
+WorkingDirectory=/opt/license-center
+Environment=LC_DATA=/var/lib/license-center
+Environment=LC_HOST=127.0.0.1
+Environment=LC_PORT=8000
+ExecStart=/opt/license-center/.venv/bin/python -m center.cli serve
+UMask=0077
+Restart=on-failure
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/license-center
+
+[Install]
+WantedBy=multi-user.target
