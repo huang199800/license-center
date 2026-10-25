@@ -74,3 +74,17 @@ def test_generated_compose_default_loopback_and_persistence(tmp_path):
     assert compose['services']['center']['environment']['LC_VAULT']=='/state/keys/vault.json'
     assert any('/state' in mount for mount in compose['services']['center']['volumes'])
     assert 'privileged' not in compose['services']['center']
+
+
+def test_rotation_updates_external_vault_without_creating_data_key(tmp_path,monkeypatch,capsys):
+    from center.cli import main
+    state=tmp_path/'state';key_path=state/'keys/vault.json'
+    password_file=tmp_path/'password';password_file.write_text('random-only-for-this-test-password')
+    monkeypatch.setenv('LC_VAULT',str(key_path))
+    initialize(state/'data',password_file,'urn:rotation:test','admin',tmp_path/'mfa.json')
+    previous=Vault(key_path).data['active']
+    monkeypatch.setattr('sys.argv',['center.cli','--data',str(state/'data'),'rotate-key','--service-stopped'])
+    main()
+    assert Vault(key_path).data['active']!=previous
+    assert previous in Vault(key_path).public()
+    assert not (state/'data/vault.json').exists()

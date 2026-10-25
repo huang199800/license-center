@@ -30,3 +30,4 @@ compose.generated.json
 .source-commit
 .operation.lock
 SHA256SUMS.txt
+docs/third-party-licenses/

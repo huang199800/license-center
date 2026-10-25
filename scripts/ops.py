@@ -13,11 +13,13 @@ import os
 import platform
 import re
 import secrets
+import shlex
 import shutil
 import socket
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
@@ -71,10 +73,13 @@ def release(source=SOURCE):
 
 
 def commit_of(source=SOURCE):
-    result = run(['git','rev-parse','HEAD'], cwd=source, allow_failure=True)
+    # This exact directory already supplies the explicitly executed installer.
+    # Do not add a global wildcard trust exception or execute a repository fsmonitor.
+    git=['git','-c','safe.directory='+str(Path(source).resolve()),'-c','core.fsmonitor=false']
+    result = run([*git,'rev-parse','HEAD'], cwd=source, allow_failure=True)
     value = result.stdout.strip() if result.returncode == 0 else ''
     if value:
-        status=run(['git','status','--porcelain'],cwd=source).stdout.strip()
+        status=run([*git,'status','--porcelain'],cwd=source).stdout.strip()
         if status:fail('SOURCE_HAS_UNCOMMITTED_CHANGES')
     marker = Path(source)/'.source-commit'
     if not value and marker.exists():value=marker.read_text().strip()
@@ -129,6 +134,12 @@ def host_check(root, require_docker=True, installing=False, config=None):
     if require_docker:
         if not shutil.which('docker'):fail('DOCKER_MISSING_USE_AUTO_INSTALL_DOCKER_OR_INSTALL_OFFICIALLY')
         run(['docker','info'],timeout=30);run(['docker','compose','version'],timeout=30)
+        endpoint=os.environ.get('DOCKER_HOST') or json.loads(run(['docker','context','inspect','--format','{{json .Endpoints.docker.Host}}'],timeout=30).stdout)
+        if not endpoint.startswith('unix://'):fail('LOCAL_DOCKER_ENGINE_REQUIRED_REMOTE_CONTEXT_UNSUPPORTED')
+        security=run(['docker','info','--format','{{json .SecurityOptions}}'],timeout=30).stdout
+        if 'rootless' in security:fail('ROOTLESS_DOCKER_UID_MAPPING_NOT_SUPPORTED')
+        version=run(['docker','version','--format','{{.Server.Version}}'],timeout=30).stdout.strip()
+        if not re.match(r'^\d+\.',version) or int(version.split('.')[0])<28:fail('DOCKER_ENGINE_28_OR_NEWER_REQUIRED')
     if installing and config:
         ports=[('127.0.0.1',config['port'])]
         if config['domain']:ports += [('0.0.0.0',config['http_port']),('0.0.0.0',config['https_port'])]
@@ -264,7 +275,16 @@ class Deployment:
         self.helper('backup','--root','/state/data','--output','/exchange/'+staged.name,
                     '--config','/deployment/config.json','--metadata','/deployment/version.json',
                     '--password-file','/run/secrets/backup','--key-password-file','/run/secrets/key')
-        os.replace(staged,target)
+        fd,temp_path=tempfile.mkstemp(prefix='.lc-backup-',dir=target.parent)
+        try:
+            with os.fdopen(fd,'wb') as dest, staged.open('rb') as source:
+                shutil.copyfileobj(source,dest);dest.flush();os.fsync(dest.fileno())
+            # Link a complete file atomically without ever replacing an existing target.
+            # Temp and target are on the same filesystem, including external backup disks.
+            os.link(temp_path,target)
+            staged.unlink()
+        finally:
+            Path(temp_path).unlink(missing_ok=True)
         digest=hashlib.sha256(target.read_bytes()).hexdigest()
         target.with_suffix(target.suffix+'.sha256').write_text(digest+'  '+target.name+'\n')
         return str(target)
@@ -294,7 +314,10 @@ def create_secrets(dep,config):
         fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
         with os.fdopen(fd,'w') as f:f.write(secrets.token_urlsafe(36)+'\n')
         config[key]=str(path)
-    if Path(config['backup_password_file']).read_text()==Path(config['key_password_file']).read_text():fail('BACKUP_AND_KEY_PASSWORDS_MUST_DIFFER')
+    for key in ['admin_password_file','backup_password_file','key_password_file']:
+        if len(Path(config[key]).read_text().strip())<16:fail('INJECTED_SECRET_MUST_HAVE_AT_LEAST_16_CHARACTERS')
+        if Path(config[key]).resolve().is_relative_to(SOURCE):fail('SECRET_FILE_MUST_BE_OUTSIDE_SOURCE')
+    if Path(config['backup_password_file']).read_text().strip()==Path(config['key_password_file']).read_text().strip():fail('BACKUP_AND_KEY_PASSWORDS_MUST_DIFFER')
     return config
 
 
@@ -344,11 +367,19 @@ def fetch_source(dep,repo,ref,expected,config):
     destination.mkdir(parents=True,mode=0o700)
     remote=f'git@github.com:{repo}.git' if config.get('ssh') else f'https://github.com/{repo}.git'
     env={}
+    helper_path=None
     if config.get('git_token_file'):
         token=protected(config['git_token_file'])
-        env={'GIT_ASKPASS':str(SOURCE/'scripts/git-askpass.sh'),'LC_GIT_TOKEN_FILE':str(token)}
+        fd,helper_path=tempfile.mkstemp(prefix='git-askpass-',dir=dep.root/'config')
+        os.chmod(helper_path,0o700)
+        with os.fdopen(fd,'w') as f:
+            f.write('#!/bin/sh\nexec sh '+shlex.quote(str(SOURCE/'scripts/git-askpass.sh'))+' "$@"\n')
+        env={'GIT_ASKPASS':helper_path,'LC_GIT_TOKEN_FILE':str(token)}
     run(['git','init','--quiet',destination]);run(['git','-C',destination,'remote','add','origin',remote])
-    run(['git','-C',destination,'fetch','--quiet','--depth','1','origin',ref],env=env)
+    try:
+        run(['git','-C',destination,'fetch','--quiet','--depth','1','origin',ref],env=env)
+    finally:
+        if helper_path:Path(helper_path).unlink(missing_ok=True)
     actual=run(['git','-C',destination,'rev-parse','FETCH_HEAD']).stdout.strip()
     if actual!=expected:fail('FETCHED_COMMIT_MISMATCH')
     run(['git','-C',destination,'checkout','--quiet','--detach',actual])

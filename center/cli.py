@@ -117,7 +117,7 @@ def main():
         kid = secrets.token_hex(8)
         vault.data['keys'][kid] = b64(Ed25519PrivateKey.generate().private_bytes_raw())
         vault.data['active'] = kid
-        atomic_json(root / 'vault.json', vault.data)
+        atomic_json(vault.path, vault.data)
         with transaction(root / 'center.db') as c:
             audit(c, int(time.time()), 'local-operator', 'key.rotate', target=kid, detail={'previous': previous})
         print(json.dumps({'previous': previous, 'active': kid, 'notice': '先通过可信渠道分发双公钥，再重新启动服务；旧公钥暂时保留。'}))
