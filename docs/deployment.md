@@ -6,6 +6,12 @@
 
 ## 首次安装
 
+已发布 [v1.2.0](https://github.com/huang199800/license-center/releases/tag/v1.2.0)，Ubuntu22.04/24.04 x86_64原生全流程通过 [CI](https://github.com/huang199800/license-center/actions/runs/40258841934)。固定提交 f89824828872748a401967c985390bbb63f7058b；以下为可直接执行的一条命令：
+
+```sh
+sudo bash -c 'set -euo pipefail; umask 077; apt-get update -qq; apt-get install -y -qq curl ca-certificates; f=$(mktemp); curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/huang199800/license-center/f89824828872748a401967c985390bbb63f7058b/scripts/bootstrap.sh -o "$f"; echo "02abb2c45b14804eb168a6a92b9a7ec1f44bade558356abfcb57603a1d501925  $f" | sha256sum -c -; bash "$f" --mode native --ref f89824828872748a401967c985390bbb63f7058b --commit f89824828872748a401967c985390bbb63f7058b; rm -f -- "$f"'
+```
+
 从发布说明取得固定40位提交及bootstrap SHA-256，下载、审阅并校验 `scripts/bootstrap.sh`，再通过该脚本固定提交下载源码。发布说明提供已填妥命令，不执行浮动main。公开仓库无需Token；私有下载仍支持只读SSH或0600 Token文件，认证材料不进入URL或Git remote。
 
 已有固定提交的干净源码时：

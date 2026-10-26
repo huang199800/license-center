@@ -1,6 +1,6 @@
 # 通用软件授权中心
 
-**v1.2.0 默认原生安装**：`sudo bash scripts/install.sh --mode native`。独立Python虚拟环境和systemd专用账户，默认 `127.0.0.1:43871`，不安装Docker或网关、不占用80/443。填写域名也只接入现有反向代理。详见 [原生部署与管理](docs/deployment.md)。新版本验证结果以发布说明及对应CI为准，下面v1.1.0记录属于历史容器验收。
+**[v1.2.0 原生版已发布](https://github.com/huang199800/license-center/releases/tag/v1.2.0)**：默认 `127.0.0.1:43871`，独立Python虚拟环境和systemd账户，不依赖Docker、不占用80/443。Ubuntu22.04/24.04 x86_64原生安装、跨提交升级、加密恢复及原客户端继续授权均通过 [真实CI](https://github.com/huang199800/license-center/actions/runs/40258841934)，Python64项、Node15项通过。[原生一键命令与管理](docs/deployment.md)，证据见 [native-ci-result.json](docs/native-ci-result.json)。下面v1.1.0记录属于历史容器验收。
 
 **v1.1.0 已公开发布并通过 Ubuntu 24.04 x86_64 验收**：[发布与一键命令](https://github.com/huang199800/license-center/releases/tag/v1.1.0)、[CI记录](https://github.com/huang199800/license-center/actions/runs/40209354049)、[部署入口](docs/deployment.md)、[备份迁移](docs/migration.md)、[秘密管理](docs/security.md)。验证包括移除预装Docker后的官方APT安装、公开固定提交引导、首次MFA、重复安装、容器重建、跨提交升级和隔离目录恢复。Debian/ARM、真实跨服务器DNS/HTTPS切换仍待验收。不要从浮动main分支直接部署生产。
 

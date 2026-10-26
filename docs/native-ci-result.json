@@ -1,0 +1,25 @@
+{
+  "release": "v1.2.0",
+  "commit": "f89824828872748a401967c985390bbb63f7058b",
+  "run_id": 40258841934,
+  "run_url": "https://github.com/huang199800/license-center/actions/runs/40258841934",
+  "python_tests": 64,
+  "node_tests": 15,
+  "bootstrap_sha256": "02abb2c45b14804eb168a6a92b9a7ec1f44bade558356abfcb57603a1d501925",
+  "jobs": {
+    "native_ubuntu_22_04": 121366532766,
+    "native_ubuntu_24_04": 121366532808,
+    "unit": 121366532753,
+    "docker": 121366532542,
+    "bootstrap_without_docker": 121366532772
+  },
+  "conclusion": "all_success",
+  "upgrade_from": "88b5f991da4a87178066ea12320cc5afb0a1f68a",
+  "not_verified": [
+    "Debian",
+    "ARM",
+    "two physical servers",
+    "public DNS/HTTPS cutover",
+    "private authentication"
+  ]
+}
