@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.request
 from pathlib import Path
 
 import httpx
@@ -31,7 +32,8 @@ def main():
         # Fixed high ports are reserved only on the disposable VM.
         write_json(cfg, {'domain': '', 'port': 43871, 'secret_dir': str(base/'secrets')})
         def command(action, *args):
-            result = subprocess.run([sys.executable, str(source/'scripts/deploy.py'), action,
+            entry_source = Path(dep.meta()['source']) if action == 'install' and dep.meta_path.exists() else source
+            result = subprocess.run([sys.executable, str(entry_source/'scripts/deploy.py'), action,
                          '--mode', 'native', *map(str, args)], capture_output=True, text=True)
             outputs.append(result.stdout+result.stderr)
             if result.returncode:
@@ -49,9 +51,13 @@ def main():
         client = None
         try:
             # Exercise the actual public pinned bootstrap, not a local install shortcut.
-            bootstrap = source/'scripts/bootstrap.sh'
-            result = subprocess.run(['bash', str(bootstrap), '--mode', 'native', '--ref', commit_of(),
-                '--commit', commit_of(), '--root', str(root), '--config', str(cfg), '--non-interactive'],
+            initial = os.environ.get('LC_NATIVE_INITIAL_COMMIT', commit_of())
+            bootstrap_bytes = urllib.request.urlopen('https://raw.githubusercontent.com/huang199800/license-center/'+initial+'/scripts/bootstrap.sh', timeout=30).read()
+            assert hashlib.sha256(bootstrap_bytes).digest() == hashlib.sha256((source/'scripts/bootstrap.sh').read_bytes()).digest()
+            bootstrap = base/'bootstrap.sh'
+            bootstrap.write_bytes(bootstrap_bytes)
+            result = subprocess.run(['bash', str(bootstrap), '--mode', 'native', '--ref', initial,
+                '--commit', initial, '--root', str(root), '--config', str(cfg), '--non-interactive'],
                 capture_output=True, text=True)
             outputs.append(result.stdout+result.stderr)
             if result.returncode:
@@ -84,7 +90,8 @@ def main():
             next_commit = os.environ.get('LC_NATIVE_UPGRADE_COMMIT', commit_of())
             command('update', '--root', root, '--ref', next_commit, '--commit', next_commit)
             assert client.refresh()['status'] == 'active'
-            checks.append('pinned_upgrade_preserves_license')
+            assert dep.meta()['commit'] == next_commit
+            checks.append('cross_commit_upgrade_preserves_license' if initial != next_commit else 'same_commit_redeploy_preserves_license')
             backup = base/'migration.lcb2'
             command('stop', '--root', root)
             command('backup', '--root', root, '--output', backup)
@@ -104,7 +111,7 @@ def main():
             client = LicenseClient('http://127.0.0.1:43872', 'demo', config['issuer'],
                 httpx.get('http://127.0.0.1:43872/v1/public-keys').json()['keys'], base/'client.json', allow_http=True).initialize()
             assert client.refresh()['status'] == 'active'
-            assert identity == (target/'state/keys/vault.json').read_bytes()
+            assert json.loads(identity) == json.loads((target/'state/keys/vault.json').read_bytes())
             checks.append('fresh_root_encrypted_restore_original_client_refresh')
             command('logs', '--root', target)
             combined = '\n'.join(outputs)

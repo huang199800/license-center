@@ -76,4 +76,4 @@ jobs:
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq python3-venv
       - run: python3 -m venv /tmp/lc-test-env && /tmp/lc-test-env/bin/pip install --require-hashes -r requirements-native.lock
       - name: Real native bootstrap, MFA, persistence, upgrade, encrypted recovery
-        run: sudo env GITHUB_ACTIONS=true PYTHONPATH="$PWD" /tmp/lc-test-env/bin/python -m scripts.native_acceptance
+        run: sudo env GITHUB_ACTIONS=true LC_NATIVE_INITIAL_COMMIT=88b5f991da4a87178066ea12320cc5afb0a1f68a PYTHONPATH="$PWD" /tmp/lc-test-env/bin/python -m scripts.native_acceptance
