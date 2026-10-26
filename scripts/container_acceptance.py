@@ -37,8 +37,9 @@ def main():
         if hashlib.sha256(bootstrap_bytes).hexdigest()!=expected_bootstrap:raise RuntimeError('BOOTSTRAP_HASH_MISMATCH')
         bootstrap_file=base/'bootstrap.sh';bootstrap_file.write_bytes(bootstrap_bytes)
         def bootstrap():
+            mode_args=['--mode','docker'] if initial==commit_of() else []
             result=subprocess.run(['bash',str(bootstrap_file),'--ref',initial,'--commit',initial,'--root',str(root),
-                                   '--config',str(config),'--non-interactive'],capture_output=True,text=True)
+                                   '--config',str(config),'--non-interactive',*mode_args],capture_output=True,text=True)
             if result.returncode:
                 # Expose only our controlled structured error codes, never raw buffers.
                 codes=[]

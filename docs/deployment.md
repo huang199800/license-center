@@ -1,108 +1,77 @@
-# 第十三章：公开仓库、安装与运维
+# 原生安装与运维（v1.2.0）
 
-按用户后续授权，本次交付改为**公开仓库和完整源码公开下载**，不再要求默认私有。仓库为 [huang199800/license-center](https://github.com/huang199800/license-center)。私有部署的两种认证路线仍保留，供以后切回私有时使用。
+默认使用系统 Python 3.10+、独立虚拟环境、专用非登录账户及 systemd。不会安装 Docker、Caddy 或 Nginx，不监听80/443，不改防火墙。默认只监听 `127.0.0.1:43871`；SQLite不开放网络端口。已有网关负责域名HTTPS。Docker作为显式可选后端保留，见 [历史容器部署](deployment-docker.md)。
 
-## 当前验收状态
+允许 Debian12/13、Ubuntu22.04/24.04/26.04，x86_64/aarch64，要求root/sudo、systemd系统实例、至少3GiB空闲，能访问GitHub、系统APT源和PyPI。CI设置Ubuntu22.04/24.04 x86_64原生安装实测；具体成功提交和结果见发布说明。Debian、ARM及两台物理服务器迁移需另验。
 
-版本：1.1.0，数据库schema1。发布提交 `fd772fd2fa8cbf04216f29386760298b9b49ae56`。已通过 [Ubuntu24.04 x86_64真实CI](https://github.com/huang199800/license-center/actions/runs/40209354049)：公开引导与hash校验、移除预装Docker后从官方APT重新安装、首次MFA与激活、重复安装、重建、从146e6a6提交升级到发布提交及隔离目录恢复。运行器预装Git/Python；没有声称验证Debian/ARM、两台物理服务器或公网DNS/HTTPS切换。机器可复用脚本不等于所有目标平台均已验证。
+## 首次安装
 
-目标系统白名单：Debian12/13、Ubuntu22.04/24.04/26.04，x86_64/aarch64。白名单表示安装器允许尝试，**不是已经逐一实测**。建议先在Ubuntu24.04 x86_64测试机验收，生产保留快照。要求root/sudo、至少3GiB空闲、本机rootful Docker Engine28+及Compose插件、可访问GitHub/PyPI/Docker官方镜像和APT源。远程Docker上下文及rootless UID映射暂不支持，会明确拒绝。不会关闭防火墙或卸载已有容器运行时。
+从发布说明取得固定40位提交及bootstrap SHA-256，下载、审阅并校验 `scripts/bootstrap.sh`，再通过该脚本固定提交下载源码。发布说明提供已填妥命令，不执行浮动main。公开仓库无需Token；私有下载仍支持只读SSH或0600 Token文件，认证材料不进入URL或Git remote。
 
-## 没有源码的新服务器
-
-公开引导脚本是 `scripts/bootstrap.sh`，它只做环境引导、固定提交下载和调用安装器，不包含业务数据或秘密。发布后应从固定提交URL下载，先审阅脚本，再按**独立可信渠道取得**的SHA-256校验；最后调用时固定完整40位提交。不要直接执行不断变化的main分支。
-
-以下为已发布版本的实际命令。代码SHA与引导脚本hash固定；更换版本时需重新核对。校验值与脚本若只来自同一个已被攻陷的渠道，不能建立独立信任。
+已有固定提交的干净源码时：
 
 ```sh
-sudo bash -c 'set -euo pipefail; umask 077; apt-get update -qq; apt-get install -y -qq curl ca-certificates; f=$(mktemp); curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/huang199800/license-center/fd772fd2fa8cbf04216f29386760298b9b49ae56/scripts/bootstrap.sh -o "$f"; echo "c6f974a4c34c48141eb0b97a5d5a45fc36e2a1c1c5c839937f422cc287ad6e1e  $f" | sha256sum -c -; bash "$f" --ref fd772fd2fa8cbf04216f29386760298b9b49ae56 --commit fd772fd2fa8cbf04216f29386760298b9b49ae56; rm -f -- "$f"'
+sudo bash scripts/install.sh --mode native
 ```
 
-前置认证对公开源码不需要Token。首次交互询问域名、稳定issuer以及是否安装Docker。依赖缺失时准备Python3/Git，Docker安装需明确选择；通过[Docker官方Debian/Ubuntu签名APT仓库](https://docs.docker.com/engine/install/ubuntu/)安装Engine和Compose插件，校验官方密钥指纹，拒绝自动移除冲突运行时。
+首次询问外部域名、本机端口和稳定issuer。域名描述现有网关，填写域名也不会申请80/443。端口占用时明确报出 `REQUESTED_PORT_IN_USE_127.0.0.1_43871`，可选择其他本机高位端口。安装器准备系统python3-venv、按锁文件哈希安装二进制依赖、创建数据库及管理员、启用systemd并检查服务。
 
-已有经校验的源码也可一条入口启动：`sudo bash scripts/install.sh`。源码必须处于干净Git提交；源码包未带Git历史时，先按公开仓库固定提交检出，不允许凭一个版本字符串冒充已校验提交。
-
-## 无人值守模式
-
-把 `deploy/install-config.example.json` 复制到仓库外受保护文件，例如 `/root/license-install.json`，权限0600。JSON只当数据读取，不通过shell source执行；不支持把Token/管理员密码直接写成配置值，秘密只提供文件路径。
+无人值守JSON放到仓库外 `/root/license-install.json`，权限0600：
 
 ```json
 {
   "repo": "huang199800/license-center",
-  "domain": "licenses.example.com",
-  "issuer": "urn:my-company:licenses",
-  "admin_username": "admin",
-  "port": 18080,
-  "auto_install_docker": true,
-  "ssh": false
+  "domain": "sq.hhse.top",
+  "port": 43871,
+  "issuer": "urn:license-center:production"
 }
 ```
 
 ```sh
-sudo bash scripts/install.sh --root /opt/license-center --config /root/license-install.json --non-interactive
+sudo bash scripts/install.sh --mode native --config /root/license-install.json --non-interactive
 ```
 
-未指定秘密路径时，首次生成三个独立随机文件：管理员密码、业务备份口令、密钥备份口令，默认目录 `/etc/license-center-secrets/<部署ID>/`（0700，文件0600）。文件内容不会打印；最终摘要只显示路径。无人值守也可以预先提供 `admin_password_file`、`backup_password_file`、`key_password_file` 的绝对路径；文件必须当前操作员/root拥有且权限0600，备份两个口令必须不同。`secret_dir` 必须位于源码及部署根目录之外。
+首次生成独立随机管理员密码、业务备份口令和密钥备份口令，保存在 `/etc/license-center-secrets/<部署ID>/`，目录0700、文件0600，不打印内容。可注入 `admin_password_file`、`backup_password_file`、`key_password_file` 的绝对路径，文件至少16字符，两个备份口令不得相同。MFA材料位于 `/opt/license-center/exchange/admin-enrollment.json`。安全读取密码与MFA材料导入验证器，再分权转移到密码管理器，不粘贴进日志或发给他人。
 
-首次MFA绑定材料在 `/opt/license-center/exchange/admin-enrollment.json`，不能公开下载或打印进日志。运维人员安全读取后导入验证器，并把恢复材料分权转移到密码管理器后安全移走本地副本。登录同时需要随机密码和TOTP。重复安装同一提交不会执行init，不重置密码、不生成新签名密钥；不同提交要求显式update。
+摘要显示域名、实际本机监听地址、服务名、版本和数据目录。域名HTTPS可能显示待配置；本机API健康不代表公网HTTPS已完成。重复安装同一提交只启动和检查已有服务，不重建管理员或签名身份；不同提交使用升级入口。上次仅在端口检查退出、没有deployment.json及state的安装可直接改用原生入口。已有Docker业务不能原地切模式，应恢复到新目录。
 
-## 文件、端口和持久化
+## 现有 Caddy 接入
 
-|位置|用途|
-|---|---|
-|`ROOT/releases/<commit>/`|只读发布源码，不能放秘密|
-|`ROOT/state/data/`|SQLite、许可证/兑换/实例/撤销/审计/幂等事实|
-|`ROOT/state/keys/vault.json`|签名身份、码摘要pepper和数据加密主密钥|
-|`ROOT/config/config.json`|受保护独立配置；只保存秘密路径|
-|`ROOT/deployment.json`、`config/version.json`|版本、提交、schema、应用镜像ID、基础镜像digest|
-|`ROOT/compose.generated.json`|安装器生成的实际Compose配置|
-|`ROOT/backups/`|双口令加密备份包及校验和|
-|`ROOT/exchange/`|受控临时交付目录，非Web静态目录|
-|Docker json-file日志|轮转10MiB×5，管理入口只输出白名单字段|
+仅当Caddy在宿主机或共享宿主机网络运行时，把下列站点合并到实际生效配置。已有同名站点应编辑原配置，不重复添加或覆盖其他站点：
 
-应用容器为UID10001，数据和key目录分别持久化，不随源码或容器重建删除。维护辅助容器只在读取受保护材料时以root启动，随后降权10001再操作SQLite，防止产生root拥有的WAL；正常API容器没有额外capabilities。
+```caddyfile
+sq.hhse.top {
+    request_body {
+        max_size 64KB
+    }
+    reverse_proxy 127.0.0.1:43871
+}
+```
 
-`port` 默认18080，始终只绑定127.0.0.1。无域名时不启动公网网关，可从自己电脑执行 `ssh -L 18080:127.0.0.1:18080 USER@SERVER`，再打开本机 `http://127.0.0.1:18080/`。这里的USER/SERVER是明显占位符。
-
-配置域名时Caddy监听80/443并申请证书；域名需正确解析、端口需安全组/防火墙允许。证书或DNS未就绪时摘要显示 `pending_dns_or_certificate_see_docs`，此时应通过SSH隧道处理，不能把HTTP本机端口改绑0.0.0.0冒充HTTPS。后台API始终需要密码+MFA会话，SQLite没有对公网数据库端口。
+先备份并校验配置，再通过现有管理方式热重载。普通Docker bridge中的Caddy不能通过其自身127.0.0.1连接宿主机，应另行设计私网连接。不要公开绑定授权服务。域名A/AAAA指向正确服务器，现有网关负责证书。最后检查 `https://sq.hhse.top/health/ready` 和后台。安装器不修改网关。参考 [Caddy官方文档](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)。
 
 ## 统一管理
 
-使用已安装版本的 `ROOT/releases/<commit>/scripts/manage.sh`：
+以下从固定源码目录执行，统一支持 `--root`，摘要会显示绝对入口路径：
 
 ```sh
-sudo bash scripts/manage.sh status --root /opt/license-center
-sudo bash scripts/manage.sh start --root /opt/license-center
-sudo bash scripts/manage.sh stop --root /opt/license-center
-sudo bash scripts/manage.sh restart --root /opt/license-center
-sudo bash scripts/manage.sh logs --root /opt/license-center
-sudo bash scripts/manage.sh version --root /opt/license-center
-sudo bash scripts/doctor.sh --root /opt/license-center
-sudo bash scripts/backup.sh --root /opt/license-center
-sudo bash scripts/manage.sh uninstall --root /opt/license-center
+sudo bash scripts/manage.sh status
+sudo bash scripts/manage.sh start
+sudo bash scripts/manage.sh stop
+sudo bash scripts/manage.sh restart
+sudo bash scripts/manage.sh version
+sudo bash scripts/manage.sh logs
+sudo bash scripts/doctor.sh
+sudo bash scripts/backup.sh
+sudo bash scripts/update.sh --ref REPLACE_RELEASE_TAG --commit REPLACE_FULL_40_CHARACTER_COMMIT
 ```
 
-`doctor`检查系统/Docker/Compose、数据库就绪、管理页、可信公钥，以及临时隔离数据库的真实兑换→签名校验→续费→刷新。它不会向生产库创建测试授权。logs仅输出应用已知JSON请求事件的method/route/status/ms，不转发不认识的日志行或外部命令错误正文。
+升级命令的大写值是**必须替换**的占位符。日志只输出白名单请求事件，不原样转储journal。专用服务 `license-center-<部署ID>.service` 随系统启动。`manage.sh uninstall` 停用服务，保留业务、密钥、程序、配置、备份和专用账户，没有默认彻底清理。
 
-卸载只执行本项目Compose down，不删除数据、key、配置、备份或网关卷。没有隐含彻底清理选项；彻底清理需在独立维护操作中先列出路径、验证备份并由管理员执行，不能和卸载混为一谈。
+## 持久化、升级与恢复
 
-## 指定版本升级
+程序在 `releases/<commit>` 和 `runtimes/<commit>/{app,venv}`，root拥有，服务账户只读；数据库及许可证在 `state/data`，签名身份在 `state/keys`，配置在 `config`，绑定材料与备份交换文件在 `exchange`，备份在 `backups`。日志由journal管理。服务仅对state有写权限，参见 [systemd权限说明](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec)。
 
-```sh
-# 下面两个大写值必须替换为真实发布标签和对应40位SHA。
-sudo bash scripts/update.sh --root /opt/license-center --ref REPLACE_RELEASE_TAG --commit REPLACE_FULL_COMMIT
-```
+升级固定源码提交，先准备新虚拟环境，再停止服务、执行一致性加密备份，切换unit并检查API、后台、数据库及隔离授权功能。schema不兼容时拒绝自动升级。保留旧程序、数据和签名身份。失败输出备份与旧runtime位置及恢复入口，不承诺自动数据库回退。新服务已产生写入时，先保全当前数据，再决定是否恢复；旧备份之后的记录需要补录或对账。
 
-也可把ref设置为与commit相同的40位SHA。main/master等开发分支被拒绝。下载先核对Git实际提交；检查当前schema在目标release.json允许范围；先构建镜像，再停服务完成最终备份，再切新版本、健康检查及隔离授权功能验证。当前仅支持schema1兼容应用更新，任何数据库结构版本变化都拒绝自动升级，需单独审查迁移。
-
-配置、data和key保留。安装时解析并记录Python/Caddy镜像digest；依赖带哈希锁。从本地源码构建，不需要私有镜像仓库；如运营者将基础镜像改为私有镜像，应先用Docker官方凭据存储/`docker login --password-stdin`配置，不把密码作为build-arg或放进Dockerfile。密码管理器/系统凭据存储由运营者负责。
-
-失败会输出备份位置、原版本/提交及恢复建议，不自动把旧DB覆盖到可能已经接收新业务的DB。应用回退在相同schema时可显式update到旧提交；数据库回退是恢复历史事实，可能丢失续费/兑换/撤销，必须按迁移文档停写、对账再执行。
-
-## 可选私有仓库路线
-
-A. **只读SSH部署密钥**：按[GitHub部署密钥说明](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys)，将新服务器的公钥加到指定私库Deploy keys，关闭写权限；私钥只在服务器/root的SSH配置或ssh-agent里。提前通过独立渠道核对github.com主机指纹，保持StrictHostKeyChecking，不用未经核对的ssh-keyscan结果自动信任。首次 `git clone --branch <固定标签> git@github.com:OWNER/REPO.git` 完成认证后执行install；配置repo和ssh=true用于后续更新。
-
-B. **公开通用bootstrap + 私库源码**：将本交付 `scripts/bootstrap.sh` 作为唯一文件发布在另一个公开引导仓库；审阅、版本固定并校验其hash后，传 `--repo OWNER/REPO --ssh`，或 `--git-token-file /root/protected-token`。Token选择仅指定仓库Contents:read的细粒度Token，设置有效期；不要默认使用全账号权限。凭据只通过GIT_ASKPASS读取受保护文件，remote URL始终不带凭据。后续升级在独立配置中设置相同 `git_token_file` 绝对路径或重新配置SSH，不复制token进源码、镜像或备份包。
-
-私有认证链路当前未实测；公开下载是用户选定并将验证的默认链路。不要把GitHub账号绑定误认为新服务器自动获得私有仓库访问权。
+备份恢复见 [迁移文档](migration.md)。元数据未标backend的旧部署按Docker处理，拒绝显式跨模式原地操作。

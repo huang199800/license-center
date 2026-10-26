@@ -7,4 +7,4 @@ if [[ $# -eq 0 ]]; then
   printf '%s\n' '用法: manage.sh {status|start|stop|restart|logs|version|doctor|update|backup|restore|uninstall} [选项]'
   exit 0
 fi
-exec python3 "$script_dir/ops.py" "$@"
+exec python3 "$script_dir/deploy.py" "$@"

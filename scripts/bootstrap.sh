@@ -13,6 +13,7 @@ non_interactive=0
 ssh_mode=0
 token_file=''
 action=install
+mode=native
 bundle=''
 stale=0
 while [[ $# -gt 0 ]]; do
@@ -21,6 +22,7 @@ while [[ $# -gt 0 ]]; do
     --ref) ref="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
     --root) root="$2"; shift 2 ;;
+    --mode) mode="$2"; shift 2 ;;
     --config) config="$2"; shift 2 ;;
     --git-token-file) token_file="$2"; shift 2 ;;
     --ssh) ssh_mode=1; shift ;;
@@ -28,13 +30,14 @@ while [[ $# -gt 0 ]]; do
     --restore) action=restore; shift ;;
     --bundle) bundle="$2"; shift 2 ;;
     --accept-stale-state) stale=1; shift ;;
-    --help) echo 'bootstrap.sh --ref vX.Y.Z|COMMIT --commit FULL_SHA [--config PROTECTED_JSON --non-interactive] [--root PATH] [--repo OWNER/REPO] [--ssh|--git-token-file FILE] [--restore --bundle FILE --accept-stale-state]'; exit 0 ;;
+    --help) echo 'bootstrap.sh --ref vX.Y.Z|COMMIT --commit FULL_SHA [--mode native|docker (default native)] [--config PROTECTED_JSON --non-interactive] [--root PATH] [--repo OWNER/REPO] [--ssh|--git-token-file FILE] [--restore --bundle FILE --accept-stale-state]'; exit 0 ;;
     *) echo '未知引导参数。' >&2; exit 1 ;;
   esac
 done
 [[ "$repo" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ && "$commit" =~ ^[0-9a-f]{40}$ ]] || { echo '需要OWNER/REPO和完整40位提交SHA。' >&2; exit 1; }
 [[ "$ref" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?$ || "$ref" == "$commit" ]] || { echo '只允许固定发布标签或相同提交SHA。' >&2; exit 1; }
 [[ "$(id -u)" == 0 ]] || { echo '请以root或sudo执行安装。' >&2; exit 1; }
+[[ "$mode" == native || "$mode" == docker ]] || { echo '--mode只允许native或docker。' >&2; exit 1; }
 [[ "$root" == /* && "$root" != / && "$root" != /opt && "$root" != /etc && "$root" != /var && "$root" != *..* ]] || { echo '安装根目录不安全。' >&2; exit 1; }
 if ! command -v python3 >/dev/null || ! command -v git >/dev/null; then
   command -v apt-get >/dev/null || { echo '需要Debian/Ubuntu、python3和git。' >&2; exit 1; }
@@ -77,6 +80,7 @@ if [[ ! -d "$destination/.git" ]]; then
 fi
 [[ "$(git -C "$destination" rev-parse HEAD)" == "$commit" ]] || { echo '已有源码提交不一致。' >&2; exit 1; }
 args=(--root "$root")
+args+=(--mode "$mode")
 [[ -z "$config" ]] || args+=(--config "$config")
 [[ "$non_interactive" == 0 ]] || args+=(--non-interactive)
 if [[ "$action" == restore ]]; then

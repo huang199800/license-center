@@ -29,6 +29,8 @@ jobs:
       - run: python scripts/scan_secrets.py
   docker:
     runs-on: ubuntu-24.04
+    env:
+      LC_DEPLOY_MODE: docker
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,6 +43,8 @@ jobs:
         run: sudo env PATH="$PATH" PYTHONPATH="$PWD" "$(which python)" -m scripts.container_acceptance
   bootstrap-without-docker:
     runs-on: ubuntu-24.04
+    env:
+      LC_DEPLOY_MODE: docker
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,3 +63,17 @@ jobs:
           ! command -v docker
       - name: Public bootstrap, official Docker APT install and cross-commit upgrade
         run: sudo env PATH="$PATH" PYTHONPATH="$PWD" LC_TEST_INITIAL_COMMIT=146e6a6dfd01d5a4e99def415f00734864c56672 LC_TEST_BOOTSTRAP_SHA256=c6f974a4c34c48141eb0b97a5d5a45fc36e2a1c1c5c839937f422cc287ad6e1e "$(which python)" -m scripts.container_acceptance
+  native-systemd:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq python3-venv
+      - run: python3 -m venv /tmp/lc-test-env && /tmp/lc-test-env/bin/pip install --require-hashes -r requirements.lock
+      - name: Real native bootstrap, MFA, persistence, upgrade, encrypted recovery
+        run: sudo env PYTHONPATH="$PWD" /tmp/lc-test-env/bin/python -m scripts.native_acceptance

@@ -162,8 +162,12 @@ def main():
     bundle_value = json.loads(Path(args.input).read_text()) if args.command == 'restore' else None
     # Read mounted root-only secrets first, then drop to the normal data owner before
     # touching SQLite. This avoids root-owned WAL files during online backups.
-    if os.name != 'nt' and os.geteuid() == 0 and os.environ.get('LC_DROP_UID') == '10001':
-        os.setgroups([]);os.setgid(10001);os.setuid(10001)
+    if os.name != 'nt' and os.geteuid() == 0 and os.environ.get('LC_DROP_UID'):
+        uid = int(os.environ['LC_DROP_UID'])
+        gid = int(os.environ.get('LC_DROP_GID', str(uid)))
+        if uid <= 0 or gid <= 0:
+            raise ValueError('HELPER_REQUIRES_UNPRIVILEGED_IDENTITY')
+        os.setgroups([]);os.setgid(gid);os.setuid(uid)
     if args.command=='init':result=initialize(args.root,args.password_file,args.issuer,args.username,args.enrollment,password)
     elif args.command=='backup':result=pack(args.root,args.output,config,metadata,password,key_password)
     elif args.command=='restore':result=unpack(args.input,args.destination,args.config_output,password,key_password,args.accept_stale_state,bundle_value)

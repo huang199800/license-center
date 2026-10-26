@@ -1,1 +1,1 @@
-{"version":"1.1.0","schema":1,"upgrade_from_schemas":[1],"python_image":"python:3.13-slim","gateway_image":"caddy:2"}
+{"version":"1.2.0","schema":1,"upgrade_from_schemas":[1],"python_image":"python:3.13-slim","gateway_image":"caddy:2"}
