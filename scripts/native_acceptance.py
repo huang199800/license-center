@@ -22,7 +22,7 @@ def main():
         raise SystemExit('DISPOSABLE_HOSTED_CI_ROOT_REQUIRED')
     source = Path(__file__).resolve().parents[1]
     checks, outputs = [], []
-    with tempfile.TemporaryDirectory(prefix='lc-native-') as temp:
+    with tempfile.TemporaryDirectory(prefix='lc-native-', dir='/opt') as temp:
         base = Path(temp)
         os.chmod(base, 0o755)
         root, target = base/'original', base/'restored'

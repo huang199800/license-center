@@ -108,10 +108,11 @@ class Native(ops.Deployment):
                     os.chmod(item, 0o600)
 
     def build(self, source, commit):
+        requirements = source/'requirements-native.lock'
         runtime = self.root/'runtimes'/commit
         if (runtime/'ready.json').exists():
             marker = json.loads((runtime/'ready.json').read_text())
-            if marker != {'commit': commit, 'requirements_sha256': hashlib.sha256((source/'requirements.lock').read_bytes()).hexdigest()}:
+            if marker != {'commit': commit, 'requirements_sha256': hashlib.sha256(requirements.read_bytes()).hexdigest()}:
                 ops.fail('RUNTIME_MANIFEST_MISMATCH')
             return runtime
         runtime.mkdir(parents=True, exist_ok=True, mode=0o755)
@@ -126,14 +127,14 @@ class Native(ops.Deployment):
         print('准备原生 Python 虚拟环境及固定哈希依赖（不安装 Docker）……', flush=True)
         ops.run(['/usr/bin/python3', '-m', 'venv', runtime/'venv'])
         ops.run([runtime/'venv/bin/python', '-m', 'pip', 'install', '--disable-pip-version-check',
-                 '--only-binary=:all:', '--require-hashes', '-r', source/'requirements.lock'])
+                 '--only-binary=:all:', '--require-hashes', '-r', requirements])
         for directory, dirs, files in os.walk(runtime):
             os.chmod(directory, 0o755)
             for name in files:
                 path = Path(directory)/name
                 if not path.is_symlink():
                     os.chmod(path, 0o755 if path.stat().st_mode & 0o111 else 0o644)
-        ops.write_json(runtime/'ready.json', {'commit': commit, 'requirements_sha256': hashlib.sha256((source/'requirements.lock').read_bytes()).hexdigest()})
+        ops.write_json(runtime/'ready.json', {'commit': commit, 'requirements_sha256': hashlib.sha256(requirements.read_bytes()).hexdigest()})
         return runtime
 
     def helper(self, command, *args, config=None, mounts=None):
@@ -197,7 +198,7 @@ def prepare(args, dep):
 
 def prerequisites(root):
     ops.host_check(root, require_docker=False)
-    if not re.fullmatch(r'/[A-Za-z0-9_./-]+', str(root)) or str(root).startswith(('/root/', '/home/')):
+    if not re.fullmatch(r'/[A-Za-z0-9_./-]+', str(root)) or str(root).startswith(('/root/', '/home/', '/tmp/', '/var/tmp/')):
         ops.fail('NATIVE_ROOT_REQUIRES_SIMPLE_PATH_OUTSIDE_HOME')
     if not Path('/run/systemd/system').is_dir():
         ops.fail('SYSTEMD_SYSTEM_INSTANCE_REQUIRED')
